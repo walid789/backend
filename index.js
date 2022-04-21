@@ -14,7 +14,7 @@ const pool  = mysql.createPool({
     connectionLimit : 10,
     host            : 'localhost',
     user            : 'root',
-    password        : 'tam',
+    password        : '',
     database        : 'tam'
 })
 
@@ -120,7 +120,7 @@ app.post('/addProduit', (req, res) => {
 
     pool.getConnection((err, connection) => {
         if(err) throw err
-        
+         const quanite=req.body.quanite;
          const nom=req.body.nom;
          const prix=req.body.prix;
         const url=req.body.url;
@@ -132,7 +132,7 @@ app.post('/addProduit', (req, res) => {
         const mat=req.body.mat;
         const cat=req.body.selcted;
   
-        connection.query('INSERT INTO produit (nom,prix,categorie,image,dim,matriel,sous_image1,sous_image2,sous_image3,sous_image4)  VALUES (?,?,?,?,?,?,?,?,?,?) ',[nom,prix,cat,url,dim,mat,url1,url2,url3,url4], (err, rows) => {
+        connection.query('INSERT INTO produit (nom,prix,categorie,image,dim,matriel,sous_image1,sous_image2,sous_image3,sous_image4,stoke)  VALUES (?,?,?,?,?,?,?,?,?,?,?) ',[nom,prix,cat,url,dim,mat,url1,url2,url3,url4,quanite], (err, rows) => {
          
 
         connection.release() // return the connection to pool
@@ -192,6 +192,26 @@ app.get('/getData', (req, res) => {
     })
 })
 
+
+app.get('/getCommande', (req, res) => {
+    pool.getConnection((err, connection) => {
+        if(err) throw err
+        console.log('connected as id ' + connection.threadId)
+        connection.query('SELECT * from commande', (err, rows) => {
+            connection.release() // return the connection to pool
+
+            if (!err) {
+                res.send(rows)
+            } else {
+                console.log(err)
+            }
+
+         if(err) throw err
+           // console.log('The data from beer table are: \n', rows)
+        })
+    })
+})
+
 //retourne tous les donne du panier 
 app.post('/getPanier', (req, res) => {
     pool.getConnection((err, connection) => {
@@ -211,6 +231,47 @@ app.post('/getPanier', (req, res) => {
         })
     })
 })
+
+
+app.post('/getUserById', (req, res) => {
+    pool.getConnection((err, connection) => {
+        if(err) throw err
+      console.log(req.body.id)
+        connection.query('SELECT * FROM user WHERE id=?', [req.body.id],(err, rows) => {
+            connection.release() 
+            if (!err) {
+                res.send(rows)
+            } else {
+                console.log(err)
+            }
+
+         if(err) throw err
+         console.log('The data from beer table are: \n', rows)
+        })
+    })
+})
+
+app.post('/getProduitById', (req, res) => {
+    pool.getConnection((err, connection) => {
+        if(err) throw err
+      
+        connection.query('SELECT * FROM produit WHERE id=? ', [req.body.id],(err, rows) => {
+            connection.release() 
+            if (!err) {
+                res.send(rows)
+            } else {
+                console.log(err)
+            }
+
+         if(err) throw err
+         console.log('The data from beer table are: \n', rows)
+        })
+    })
+})
+
+
+
+
 app.post('/DeletPanier', (req, res) => {
     pool.getConnection((err, connection) => {
         if(err) throw err
@@ -229,24 +290,53 @@ app.post('/DeletPanier', (req, res) => {
     })
 })
 
+app.put('/UpdateProduit', (req, res) => {
+
+    pool.getConnection((err, connection) => {
+        if(err) throw err
+       // console.log(`connected as id ${connection.threadId}`)
+
+        const { id, nom, prix, selcted,dim,mat, url,url1, url2,url3 ,url4,quanite} = req.body
+
+        connection.query('UPDATE produit SET nom = ?, prix = ?, categorie = ?, image = ?,  dim = ?, matriel = ?, sous_image1 = ? , sous_image2 = ? , sous_image3 = ? , sous_image4 = ?,quanite= ? WHERE id = ?', [nom, prix, selcted,url,dim,mat, url1, url2,url3 ,url4, id,quanite] , (err, rows) => {
+            connection.release() // return the connection to pool
+
+            if(!err) {
+                res.send(`produit ajouter avec succes !`)
+            } else {
+                console.log(err)
+            }
+            
+        })
+        console.log(req.body)
+    })
+})
+
 
 const multer=require('multer')
 const cors =require('cors');
 
 const storage=multer.diskStorage({
-    destination:'../../my-app1/src/assets/image',
+    destination:'../pfe/src/assets/image',
     filename:function(req,file,cb){
-       const name=file.originalname.replace(".jpg","")
-       console.log(name);
-       console.log(file.mimetype.split('/')[1])
-    cb(null,name+'.'+file.mimetype.split('/')[1])
+       // console.log(file.mimetype)
+        let i=file.originalname.indexOf(".");
+        let ch=file.originalname.slice(0,i);
+        //console.log(ch)
+        
+        let type2=file.originalname.substr(i,4);
+        console.log('valeur'+type2)
+    cb(null,ch+'.'+file.mimetype.split('/')[1])
+ 
     }
 })
 
 
 const upload=multer({storage: storage})
 app.use(cors());
-app.post('/addImage',upload.single('file'),(req,res)=>{})
+app.post('/addImage',upload.single('file'),(req,res)=>{
+    res.send('image ajouter avec succes')
+})
 
 
 app.listen(port, () => console.log(`Listening on port ${port}`))
