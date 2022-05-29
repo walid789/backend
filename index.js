@@ -11,11 +11,11 @@ app.use(express.urlencoded({extended: true}));
 app.use(express.json());
 
 const pool  = mysql.createPool({
-    connectionLimit : 10,
+    connectionLimit : 15,
     host            : 'localhost',
     user            : 'root',
     password        : '',
-    database        : 'tam'
+    database        : 'tam1'
 })
 
 
@@ -71,7 +71,9 @@ app.post('/addUser', (req, res) => {
        const email=req.body.email;
        const password=req.body.password;
        const phone=req.body.phone;
-        connection.query('INSERT INTO user (nom,mail,pass_word,numro) VALUES (?,?,?,?)', [name,email,password,phone], (err, rows) => {
+       const date=req.body.date;
+       const adresse=req.body.adresse;
+        connection.query('INSERT INTO user (nom,mail,pass_word,numro,date,adress) VALUES (?,?,?,?,?,?,?)', [name,email,password,phone,date,adresse], (err, rows) => {
         connection.release() // return the connection to pool
         if (!err) {
             res.send(`user add succeful`)
@@ -132,7 +134,7 @@ app.post('/addProduit', (req, res) => {
         const mat=req.body.mat;
         const cat=req.body.selcted;
   
-        connection.query('INSERT INTO produit (nom,prix,categorie,image,dim,matriel,sous_image1,sous_image2,sous_image3,sous_image4,stoke)  VALUES (?,?,?,?,?,?,?,?,?,?,?) ',[nom,prix,cat,url,dim,mat,url1,url2,url3,url4,quanite], (err, rows) => {
+        connection.query('INSERT INTO produit (nom,prix,categorie,image,dim,matriel,sous_image1,sous_image2,sous_image3,sous_image4,quanite)  VALUES (?,?,?,?,?,?,?,?,?,?,?) ',[nom,prix,cat,url,dim,mat,url1,url2,url3,url4,quanite], (err, rows) => {
          
 
         connection.release() // return the connection to pool
@@ -146,7 +148,28 @@ app.post('/addProduit', (req, res) => {
     })
 });
 
+app.post('/addCommande', (req, res) => {
 
+    pool.getConnection((err, connection) => {
+        if(err) throw err
+         const quantite=req.body.quantite;
+         const  id_produit=req.body.id_produit;
+         const id_user=req.body.id_user;
+        const date=req.body.date;
+  
+        connection.query('INSERT INTO commande (id_user,id_produit,quantite,date)  VALUES (?,?,?,?) ',[id_user,id_produit,quantite,date], (err, rows) => {
+         
+
+        connection.release() // return the connection to pool
+        if (!err) {
+            res.send(`Commande ajouter avec succes`)
+        } else {
+            console.log(err)
+        }
+   //     console.log('The data from beer table are:11 \n', prix)
+        })
+    })
+});
 
 app.post('/getUser', (req, res) => {
     pool.getConnection((err, connection) => {
@@ -178,6 +201,26 @@ app.get('/getData', (req, res) => {
         if(err) throw err
         console.log('connected as id ' + connection.threadId)
         connection.query('SELECT * from produit', (err, rows) => {
+            connection.release() // return the connection to pool
+
+            if (!err) {
+                res.send(rows)
+            } else {
+                console.log(err)
+            }
+
+         if(err) throw err
+           // console.log('The data from beer table are: \n', rows)
+        })
+    })
+})
+
+
+app.get('/getBestSales', (req, res) => {
+    pool.getConnection((err, connection) => {
+        if(err) throw err
+        console.log('connected as id ' + connection.threadId)
+        connection.query('SELECT p.* ,sum(c.quantite) as count FROM produit As p, commande As c  WHERE c.id_produit=p.id   GROUP by p.nom ORDER BY count DESC', (err, rows) => {
             connection.release() // return the connection to pool
 
             if (!err) {
@@ -233,6 +276,25 @@ app.post('/getPanier', (req, res) => {
 })
 
 
+app.post('/FrogetPassword', (req, res) => {
+    pool.getConnection((err, connection) => {
+        if(err) throw err
+        //console.log('connected as id ' + connection.threadId)
+     
+        connection.query('SELECT * FROM user WHERE mail=?', [req.body.mail],(err, rows) => {
+            connection.release() 
+            if (!err) {
+                res.send(rows)
+            } else {
+                console.log(err)
+            }
+
+         if(err) throw err
+         console.log('The data from beer table are: \n', rows)
+        })
+    })
+})
+
 app.post('/getUserById', (req, res) => {
     pool.getConnection((err, connection) => {
         if(err) throw err
@@ -251,11 +313,30 @@ app.post('/getUserById', (req, res) => {
     })
 })
 
+
+app.get('/getAllUser', (req, res) => {
+    pool.getConnection((err, connection) => {
+        if(err) throw err
+    
+        connection.query('SELECT * FROM user ', [],(err, rows) => {
+            connection.release() 
+            if (!err) {
+                res.send(rows)
+            } else {
+                console.log(err)
+            }
+
+         if(err) throw err
+         //console.log('The data from beer table are: \n', rows)
+        })
+    })
+})
+
 app.post('/getProduitById', (req, res) => {
     pool.getConnection((err, connection) => {
         if(err) throw err
-      
-        connection.query('SELECT * FROM produit WHERE id=? ', [req.body.id],(err, rows) => {
+      console.log(req.body.id)
+        connection.query('SELECT * FROM produit WHERE id=? ', [req.body.id_produit],(err, rows) => {
             connection.release() 
             if (!err) {
                 res.send(rows)
@@ -265,6 +346,24 @@ app.post('/getProduitById', (req, res) => {
 
          if(err) throw err
          console.log('The data from beer table are: \n', rows)
+        })
+    })
+})
+
+
+app.post('/DeletProduit', (req, res) => {
+    pool.getConnection((err, connection) => {
+        if(err) throw err
+     
+        connection.query('DELETE FROM Produit WHERE id=?', [req.body.id],(err, rows) => {
+            connection.release() 
+            if (!err) {
+                res.send('Produit supprimer !')
+            } else {
+                console.log(err) 
+            }
+            if(err) throw err
+     
         })
     })
 })
@@ -290,12 +389,32 @@ app.post('/DeletPanier', (req, res) => {
     })
 })
 
-app.put('/UpdateProduit', (req, res) => {
 
+
+
+app.post('/DeletCommande', (req, res) => {
+    pool.getConnection((err, connection) => {
+        if(err) throw err
+     
+        connection.query('DELETE FROM commande WHERE id=?', [req.body.id],(err, rows) => {
+            connection.release() 
+            if (!err) {
+                res.send('commande supprimer !')
+            } else {
+                console.log(err) 
+            }
+            if(err) throw err
+
+        
+     
+        })
+    })
+})
+
+app.put('/UpdateProduit', (req, res) => {
     pool.getConnection((err, connection) => {
         if(err) throw err
        // console.log(`connected as id ${connection.threadId}`)
-
         const { id, nom, prix, selcted,dim,mat, url,url1, url2,url3 ,url4,quanite} = req.body
 
         connection.query('UPDATE produit SET nom = ?, prix = ?, categorie = ?, image = ?,  dim = ?, matriel = ?, sous_image1 = ? , sous_image2 = ? , sous_image3 = ? , sous_image4 = ?,quanite= ? WHERE id = ?', [nom, prix, selcted,url,dim,mat, url1, url2,url3 ,url4, id,quanite] , (err, rows) => {
@@ -303,6 +422,53 @@ app.put('/UpdateProduit', (req, res) => {
 
             if(!err) {
                 res.send(`produit ajouter avec succes !`)
+            } else {
+                console.log(err)
+            }
+            
+        })
+        console.log(req.body)
+    })
+})
+
+
+
+
+app.put('/UpdateStockProduit', (req, res) => {
+
+    pool.getConnection((err, connection) => {
+        if(err) throw err
+
+        const { id,stock} = req.body
+        
+        connection.query('UPDATE produit SET quanite=quanite - ? WHERE id = ?', [stock,id] , (err, rows) => {
+            connection.release() // return the connection to pool
+
+            if(!err) {
+                res.send(`produit update avec succes !`)
+            } else {
+                console.log(err)
+            }
+            
+        })
+        console.log(req.body)
+    })
+})
+
+
+
+
+app.put('/UpdateCommande', (req, res) => {
+
+    pool.getConnection((err, connection) => {
+        if(err) throw err
+        const { id, Payment} = req.body
+
+        connection.query('UPDATE commande SET Payement = ?  WHERE id = ?', [Payment, id] , (err, rows) => {
+            connection.release() // return the connection to pool
+
+            if(!err) {
+                res.send(`commande update avec succes !`)
             } else {
                 console.log(err)
             }
