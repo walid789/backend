@@ -73,7 +73,7 @@ app.post('/addUser', (req, res) => {
        const phone=req.body.phone;
        const date=req.body.date;
        const adresse=req.body.adresse;
-        connection.query('INSERT INTO user (nom,mail,pass_word,numro,date,adress) VALUES (?,?,?,?,?,?,?)', [name,email,password,phone,date,adresse], (err, rows) => {
+        connection.query('INSERT INTO user (nom,mail,pass_word,numro,date,adresse) VALUES (?,?,?,?,?,?)', [name,email,password,phone,date,adresse], (err, rows) => {
         connection.release() // return the connection to pool
         if (!err) {
             res.send(`user add succeful`)
@@ -99,14 +99,12 @@ app.post('/addPanier', (req, res) => {
         const quanite=req.body.quanite;
         const id_user=req.body.id_user;
         const id_produit=req.body.id_produit;
-        //console.log(nom+ 'heloo')
         connection.query('INSERT INTO panier (nom,prix,image,dim,matriel,quantite,id_user,id_produit)  VALUES (?,?,?,?,?,?,?,?) ',[nom,prix,image,dim,mat,quanite,id_user,id_produit], (err, rows) => {
-            //INSERT INTO panier (id,nom,prix,image,dim,matriel,quantite,id_user)
-            // SELECT id,nom,prix,image,dim,matriel,quantite FROM produit WHERE id=? ;
+         
 
         connection.release() // return the connection to pool
         if (!err) {
-            res.send(`panier ajouter avec succes`)
+            res.send(`produit ajouter a panier  avec succes`)
         } else {
             console.log(err)
         }
@@ -139,7 +137,7 @@ app.post('/addProduit', (req, res) => {
 
         connection.release() // return the connection to pool
         if (!err) {
-            res.send(`panier ajouter avec succes`)
+            res.send(`produit ajouter avec succes`)
         } else {
             console.log(err)
         }
@@ -162,7 +160,7 @@ app.post('/addCommande', (req, res) => {
 
         connection.release() // return the connection to pool
         if (!err) {
-            res.send(`Commande ajouter avec succes`)
+            res.send(`Commande ajouter avec succes`)    
         } else {
             console.log(err)
         }
@@ -184,12 +182,13 @@ app.post('/getUser', (req, res) => {
             
             if (!err) {
                 res.send(rows)
+               
             } else {
                 console.log(err)
             }
 
            if(err) throw err
-           // console.log('The data from beer table are: \n', rows)
+       
         })
     })
 })
@@ -378,7 +377,7 @@ app.post('/DeletPanier', (req, res) => {
         connection.query('DELETE FROM panier WHERE id_user=? AND id=?', [req.body.id_user,req.body.id],(err, rows) => {
             connection.release() 
             if (!err) {
-                res.send(rows)
+                res.send("produit supprimer de la panier !!")
             } else {
                 console.log(err) 
             }
@@ -414,14 +413,13 @@ app.post('/DeletCommande', (req, res) => {
 app.put('/UpdateProduit', (req, res) => {
     pool.getConnection((err, connection) => {
         if(err) throw err
-       // console.log(`connected as id ${connection.threadId}`)
         const { id, nom, prix, selcted,dim,mat, url,url1, url2,url3 ,url4,quanite} = req.body
 
-        connection.query('UPDATE produit SET nom = ?, prix = ?, categorie = ?, image = ?,  dim = ?, matriel = ?, sous_image1 = ? , sous_image2 = ? , sous_image3 = ? , sous_image4 = ?,quanite= ? WHERE id = ?', [nom, prix, selcted,url,dim,mat, url1, url2,url3 ,url4, id,quanite] , (err, rows) => {
+        connection.query('UPDATE produit SET nom = ?, prix = ?, categorie = ?, image = ?,  dim = ?, matriel = ?, sous_image1 = ? , sous_image2 = ? , sous_image3 = ? , sous_image4 = ?,quanite= ? WHERE id = ?', [nom, prix, selcted,url,dim,mat, url1, url2,url3 ,url4, quanite,id] , (err, rows) => {
             connection.release() // return the connection to pool
 
             if(!err) {
-                res.send(`produit ajouter avec succes !`)
+                res.send(`produit modifier avec succes !`)
             } else {
                 console.log(err)
             }
@@ -493,7 +491,6 @@ const storage=multer.diskStorage({
         let type2=file.originalname.substr(i,4);
         console.log('valeur'+type2)
     cb(null,ch+'.'+file.mimetype.split('/')[1])
- 
     }
 })
 
